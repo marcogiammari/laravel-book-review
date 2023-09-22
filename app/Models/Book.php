@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,4 +14,12 @@ class Book extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    // local query scope: ci permette di semplificare le nostre query, per es:
+    // \App\Models\Book::title('officiis')->get();
+    public function scopeTitle(Builder $query, string $title): Builder
+    {
+        return $query->where('title', 'LIKE', "%{$title}%");
+    }
+
 }
