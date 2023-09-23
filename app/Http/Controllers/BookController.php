@@ -2,16 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Book;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the books.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $title = $request->input('title');
+
+        // Query the books table and filter by title if provided (when title -> arrow function)
+        $books = Book::when(
+            $title,
+            fn($query, $title) => $query->title($title)
+        )->get();
+
+        return view('books.index', ['books' => $books]);
     }
 
     /**
