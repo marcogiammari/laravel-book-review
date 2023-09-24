@@ -26,7 +26,7 @@ class BookController extends Controller
             'highest_rated_last_month' => $books->highestRatedLastMonth(),
             'highest_rated_last_6_months' => $books->highestRatedLast6Months(),
             'popular_last_6_months' => $books->popularLast6Months(),
-            default => $books->latest()
+            default => $books->withAvg('reviews', 'rating')->withCount('reviews')->latest()
         };
 
         $books = $books->get();
@@ -53,9 +53,11 @@ class BookController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Book $book)
     {
-        //
+        // esempio di eager loading con metodo load() 
+        // al contrario di $book->reviews in show.blade che è un esempio di lazy loading 
+        return view('books.show', ['book' => $book->load(['reviews' => fn($query) => $query->latest()])]);
     }
 
     /**
