@@ -4,45 +4,38 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class BookController extends Controller
 {
     /**
-     * Display a listing of the books.
+     * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        // cancella la cache -> utile per test
-        // Cache::flush();
-
         $title = $request->input('title');
         $filter = $request->input('filter', '');
 
-        // Query the books table and filter by title if provided (when title -> arrow function)
         $books = Book::when(
             $title,
-            fn ($query, $title) => $query->title($title)
+            fn($query, $title) => $query->title($title)
         );
 
         $books = match ($filter) {
             'popular_last_month' => $books->popularLastMonth(),
+            'popular_last_6months' => $books->popularLast6Months(),
             'highest_rated_last_month' => $books->highestRatedLastMonth(),
-            'highest_rated_last_6_months' => $books->highestRatedLast6Months(),
-            'popular_last_6_months' => $books->popularLast6Months(),
-            default => $books->withAvg('reviews', 'rating')->withCount('reviews')->latest()
+            'highest_rated_last_6months' => $books->highestRatedLast6Months(),
+            default => $books->latest()->withAvgRating()->withReviewsCount()
         };
 
-        // $books = $books->get();
-
         $cacheKey = 'books:' . $filter . ':' . $title;
-        // Verifica che ci sia una chiave 'books' nella cache
-        // altrimenti chiama la funzione closure che restituisce $books (e logga un messaggio)
-        $books = Cache::remember($cacheKey, 3600, function () use ($books, $cacheKey) {
-            // dump('Not cached');
-            // dump($cacheKey);
-            return $books->get();
-        });
+        $books =
+            cache()->remember(
+                $cacheKey,
+                3600,
+                fn() =>
+                $books->get()
+            );
 
         return view('books.index', ['books' => $books]);
     }
@@ -66,16 +59,18 @@ class BookController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Book $book)
+    public function show(int $id)
     {
-        // qui cachiamo soltanto le review -> per cachare tutto il libro dovremmo evitare la dependency injection e usare solo l'id
-        $cacheKey = 'book:' . $book->id;
+        $cacheKey = 'book:' . $id;
 
-        $book = Cache::remember($cacheKey, 3600, fn () => $book->load([
-            // esempio di eager loading con metodo load() 
-            // al contrario di $book->reviews in show.blade che è un esempio di lazy loading 
-            'reviews' => fn ($query) => $query->latest()
-        ]));
+        $book = cache()->remember(
+            $cacheKey,
+            3600,
+            fn() =>
+            Book::with([
+                'reviews' => fn($query) => $query->latest()
+            ])->withAvgRating()->withReviewsCount()->findOrFail($id)
+        );
 
         return view('books.show', ['book' => $book]);
     }
