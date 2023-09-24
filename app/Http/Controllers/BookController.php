@@ -22,10 +22,10 @@ class BookController extends Controller
         // Query the books table and filter by title if provided (when title -> arrow function)
         $books = Book::when(
             $title,
-            fn($query, $title) => $query->title($title)
+            fn ($query, $title) => $query->title($title)
         );
 
-        $books = match($filter) {
+        $books = match ($filter) {
             'popular_last_month' => $books->popularLastMonth(),
             'highest_rated_last_month' => $books->highestRatedLastMonth(),
             'highest_rated_last_6_months' => $books->highestRatedLast6Months(),
@@ -68,9 +68,16 @@ class BookController extends Controller
      */
     public function show(Book $book)
     {
-        // esempio di eager loading con metodo load() 
-        // al contrario di $book->reviews in show.blade che è un esempio di lazy loading 
-        return view('books.show', ['book' => $book->load(['reviews' => fn($query) => $query->latest()])]);
+        // qui cachiamo soltanto le review -> per cachare tutto il libro dovremmo evitare la dependency injection e usare solo l'id
+        $cacheKey = 'book:' . $book->id;
+
+        $book = Cache::remember($cacheKey, 3600, fn () => $book->load([
+            // esempio di eager loading con metodo load() 
+            // al contrario di $book->reviews in show.blade che è un esempio di lazy loading 
+            'reviews' => fn ($query) => $query->latest()
+        ]));
+
+        return view('books.show', ['book' => $book]);
     }
 
     /**
