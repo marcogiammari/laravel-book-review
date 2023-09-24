@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BookController extends Controller
 {
@@ -12,6 +13,9 @@ class BookController extends Controller
      */
     public function index(Request $request)
     {
+        // cancella la cache -> utile per test
+        // Cache::flush();
+
         $title = $request->input('title');
         $filter = $request->input('filter', '');
 
@@ -29,7 +33,16 @@ class BookController extends Controller
             default => $books->withAvg('reviews', 'rating')->withCount('reviews')->latest()
         };
 
-        $books = $books->get();
+        // $books = $books->get();
+
+        $cacheKey = 'books:' . $filter . ':' . $title;
+        // Verifica che ci sia una chiave 'books' nella cache
+        // altrimenti chiama la funzione closure che restituisce $books (e logga un messaggio)
+        $books = Cache::remember($cacheKey, 3600, function () use ($books, $cacheKey) {
+            // dump('Not cached');
+            // dump($cacheKey);
+            return $books->get();
+        });
 
         return view('books.index', ['books' => $books]);
     }
