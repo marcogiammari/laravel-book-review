@@ -27,6 +27,7 @@ class Review extends Model
         // il metodo cache() è semplicemente un'alternativa alla facade Cache
         static::updated(fn (Review $review) => cache()->forget('book:' . $review->book_id));
         static::deleted(fn (Review $review) => cache()->forget('book:' . $review->book_id));
+        static::created(fn (Review $review) => cache()->forget('book:' . $review->book_id));
 
         // non funziona se fai l'update tramite query SQL raw 
         // o con query che non caricano il modello Review
