@@ -64,6 +64,7 @@
 </head>
 
 <body class="container mx-auto mt-10 mb-10 max-w-3xl">
+  <a href="{{ route('books.index') }}"><h1 class="mb-10 text-2xl font-semibold text-slate-800">LaraBooks</h1></a>
   @yield('content')
 </body>
 

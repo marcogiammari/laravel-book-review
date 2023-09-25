@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 
 class ReviewController extends Controller
 {
+    public function __construct()
+    {
+
+        // limita a 3 le recensioni inseribili in un'ora
+        // il rate limiting è usato soprattutto per l'API
+        $this->middleware('throttle:reviews')->only(['store']);
+    }
     /**
      * Display a listing of the resource.
      */
