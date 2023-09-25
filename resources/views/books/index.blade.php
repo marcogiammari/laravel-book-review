@@ -40,7 +40,8 @@
                         </div>
                         <div>
                             <div class="book-rating">
-                                {{ number_format($book->reviews_avg_rating, 1) }}
+                                {{-- {{ number_format($book->reviews_avg_rating, 1) }} --}}
+                                <x-star-rating :rating="$book->reviews_avg_rating" />
                             </div>
                             <div class="book-review-count">
                                 {{-- metodo helper che usa il plurale in caso ci sia più di una review --}}
